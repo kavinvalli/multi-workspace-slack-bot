@@ -10,6 +10,10 @@ import {
 import { getAuthSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
+import NotConnected from "./NotConnected";
+import { getSlackChannels } from "../actions/slack";
+import Connected from "./Connected";
+import PostTestMessage from "./PostTestMessage";
 
 const SlackPage = async () => {
   const session = await getAuthSession();
@@ -23,24 +27,28 @@ const SlackPage = async () => {
 
   if (!user) return redirect("/");
 
+  const channels = await getSlackChannels(user.slack_access_token ?? "");
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center">
-      <Card>
+      <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Slack</CardTitle>
           <CardDescription>Slack</CardDescription>
         </CardHeader>
-        {user.slack_access_token ? (
-          <CardContent>
-            <Button asChild>
-              <a href="">Connect Slack</a>
-            </Button>
-          </CardContent>
-        ) : (
-          <CardContent>
-            <Button>Connect Slack</Button>
-          </CardContent>
-        )}
+        <CardContent>
+          {user.slack_access_token ? (
+            <div className="flex flex-col gap-4">
+              <Connected
+                channels={channels}
+                defaultChannelId={user.slack_channel_id ?? ""}
+              />
+              <SignOutBtn />
+            </div>
+          ) : (
+            <NotConnected />
+          )}
+        </CardContent>
       </Card>
     </div>
   );
